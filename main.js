@@ -1,25 +1,23 @@
 /**
- * Quản lý trạng thái và logic vận hành trò chơi
+ * Logic điều khiển, hoạt ảnh tương tác và hệ thống chiến đấu thời gian thực
  */
 
 const gameState = {
   player: {
-    baseHp: 150,
-    baseAtk: 25,
-    baseDef: 5,
+    baseHp: 160,
+    baseAtk: 28,
+    baseDef: 6,
     gold: 200,
     points: 30,
     tickets: 3,
     activePetId: null,
     pets: [],
-    equippedCards: ["card_basic_atk"],
-    ownedCards: ["card_basic_atk", "card_basic_hp"]
+    equippedCards: ["card_fire_strike"],
+    ownedCards: ["card_fire_strike", "card_life_bloom"]
   },
-  currentEnemy: null,
   combatInterval: null
 };
 
-// Khởi chạy khi load xong DOM
 document.addEventListener("DOMContentLoaded", () => {
   loadSavedData();
   initTabs();
@@ -28,27 +26,25 @@ document.addEventListener("DOMContentLoaded", () => {
   renderMapMonsters();
   renderPets();
   renderDeck();
-  initConveneActions();
+  initConvene();
   initBattleModal();
 });
 
-// Lưu / Tải localStorage
 function saveData() {
-  localStorage.setItem("CUU_DAO_SAVE", JSON.stringify(gameState.player));
+  localStorage.setItem("CUU_DAO_SAVE_V2", JSON.stringify(gameState.player));
 }
 
 function loadSavedData() {
-  const saved = localStorage.getItem("CUU_DAO_SAVE");
+  const saved = localStorage.getItem("CUU_DAO_SAVE_V2");
   if (saved) {
     try {
       gameState.player = Object.assign(gameState.player, JSON.parse(saved));
     } catch (e) {
-      console.error("Lỗi đọc dữ liệu save", e);
+      console.error("Lỗi đọc dữ liệu lưu!", e);
     }
   }
 }
 
-// Chuyển Tab
 function initTabs() {
   const tabBtns = document.querySelectorAll(".tab-btn");
   tabBtns.forEach(btn => {
@@ -56,44 +52,40 @@ function initTabs() {
       tabBtns.forEach(b => b.classList.remove("active"));
       document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
       btn.classList.add("active");
-      const targetId = btn.getAttribute("data-tab");
-      document.getElementById(targetId).classList.add("active");
+      document.getElementById(btn.getAttribute("data-tab")).classList.add("active");
     });
   });
 }
 
-// Cập nhật thanh hiển thị tài nguyên
 function renderTopStats() {
   const p = gameState.player;
-  let bonusHp = 0, bonusAtk = 0, bonusDef = 0;
+  let bHp = 0, bAtk = 0, bDef = 0;
 
-  // Cộng chỉ số từ thẻ bài
   p.equippedCards.forEach(cid => {
     const card = CARDS_DATABASE.find(c => c.id === cid);
     if (card && card.statBonus) {
-      bonusHp += card.statBonus.hp || 0;
-      bonusAtk += card.statBonus.atk || 0;
-      bonusDef += card.statBonus.def || 0;
+      bHp += card.statBonus.hp || 0;
+      bAtk += card.statBonus.atk || 0;
+      bDef += card.statBonus.def || 0;
     }
   });
 
-  // Cộng chỉ số từ pet đang đồng hành
   if (p.activePetId) {
-    const pet = p.pets.find(pet => pet.id === p.activePetId);
+    const pet = p.pets.find(i => i.id === p.activePetId);
     if (pet) {
-      bonusHp += pet.hp;
-      bonusAtk += pet.atk;
-      bonusDef += pet.def;
+      bHp += pet.hp;
+      bAtk += pet.atk;
+      bDef += pet.def;
     }
   }
 
-  const totalHp = p.baseHp + bonusHp;
-  const totalAtk = p.baseAtk + bonusAtk;
-  const totalDef = p.baseDef + bonusDef;
+  const tHp = p.baseHp + bHp;
+  const tAtk = p.baseAtk + bAtk;
+  const tDef = p.baseDef + bDef;
 
-  document.getElementById("stat-player-hp").innerText = `${totalHp}/${totalHp}`;
-  document.getElementById("stat-player-atk").innerText = totalAtk;
-  document.getElementById("stat-player-def").innerText = totalDef;
+  document.getElementById("stat-player-hp").innerText = `${tHp}/${tHp}`;
+  document.getElementById("stat-player-atk").innerText = tAtk;
+  document.getElementById("stat-player-def").innerText = tDef;
 
   document.getElementById("cur-gold").innerText = p.gold;
   document.getElementById("cur-points").innerText = p.points;
@@ -101,7 +93,6 @@ function renderTopStats() {
   saveData();
 }
 
-// Render 9 Đảo
 function renderIslands() {
   const container = document.getElementById("island-list");
   container.innerHTML = "";
@@ -110,21 +101,17 @@ function renderIslands() {
     div.className = `island-card ${island.status === 'open' ? 'active' : 'locked'}`;
     div.innerHTML = `
       <h4>${island.name}</h4>
-      <span>${island.status === 'open' ? 'Đang mở' : 'Đang khóa'}</span>
+      <span>${island.status === 'open' ? 'Khả Dụng' : 'Khóa'}</span>
     `;
     div.onclick = () => {
-      if (island.status === 'open') {
-        document.getElementById("current-island-title").innerText = island.name;
-        document.getElementById("current-island-desc").innerText = island.desc;
-      } else {
-        alert("Hòn đảo này hiện chưa mở khóa!");
+      if (island.status !== 'open') {
+        alert("Đảo này hiện đang bị phong ấn!");
       }
     };
     container.appendChild(div);
   });
 }
 
-// Render 6 Quái/Boss tại Map 1
 function renderMapMonsters() {
   const grid = document.getElementById("boss-grid");
   grid.innerHTML = "";
@@ -133,14 +120,12 @@ function renderMapMonsters() {
     const card = document.createElement("div");
     card.className = `stage-node ${mob.isBoss ? 'is-boss' : ''}`;
     card.innerHTML = `
-      <div class="rune-icon" style="color: ${mob.color}; border-color: ${mob.color};">
-        <i class="fa-solid ${mob.icon}"></i>
+      <div class="stage-avatar-box">
+        <img src="${mob.sprite}" alt="${mob.name}">
       </div>
       <h3>${mob.name}</h3>
-      <div class="stats-preview">
-        <span>HP: ${mob.hp}</span>
-        <span>ATK: ${mob.atk}</span>
-        <span>DEF: ${mob.def}</span>
+      <div style="font-size:0.85rem; color:var(--text-muted);">
+        HP: <b>${mob.hp}</b> | ATK: <b>${mob.atk}</b> | DEF: <b>${mob.def}</b>
       </div>
       <button class="btn-primary btn-sm" onclick="startCombat('${mob.id}')">Khiêu Chiến</button>
     `;
@@ -148,29 +133,28 @@ function renderMapMonsters() {
   });
 }
 
-// Quản lý Linh thú Pet
 function renderPets() {
   const container = document.getElementById("pet-container");
   container.innerHTML = "";
 
   if (gameState.player.pets.length === 0) {
-    container.innerHTML = `<p style="color: var(--text-muted);">Bạn chưa thu phục linh thú nào. Hãy đánh bại quái ở bản đồ để nhận!</p>`;
+    container.innerHTML = `<p style="color:var(--text-muted)">Bạn chưa có Pet. Hãy đánh bại quái tại Đảo Ngọn Cỏ để thu phục!</p>`;
     return;
   }
 
   gameState.player.pets.forEach(pet => {
-    const isEquipped = gameState.player.activePetId === pet.id;
+    const isSelected = gameState.player.activePetId === pet.id;
     const card = document.createElement("div");
-    card.className = `pet-card ${isEquipped ? 'selected' : ''}`;
+    card.className = `pet-card ${isSelected ? 'selected' : ''}`;
     card.innerHTML = `
-      <h3>${pet.name} (Lv. ${pet.level})</h3>
-      <p>HP: +${pet.hp} | ATK: +${pet.atk} | DEF: +${pet.def}</p>
-      <div style="display: flex; gap: 8px; margin-top: 8px;">
-        <button class="btn-primary btn-sm" onclick="toggleEquipPet('${pet.id}')">
-          ${isEquipped ? 'Bỏ Ra Trận' : 'Xuất Chiến'}
+      <h3>${pet.name} (Cấp ${pet.level})</h3>
+      <p style="color:var(--text-muted)">HP: +${pet.hp} | ATK: +${pet.atk} | DEF: +${pet.def}</p>
+      <div style="display:flex; gap:8px; margin-top:8px;">
+        <button class="btn-primary btn-sm" onclick="togglePetEquip('${pet.id}')">
+          ${isSelected ? 'Cho Nghỉ' : 'Xuất Trận'}
         </button>
-        <button class="btn-primary btn-sm" style="background: var(--accent-gold);" onclick="upgradePet('${pet.id}')">
-          Nâng Cấp (50 Vàng, 10 Điểm)
+        <button class="btn-primary btn-sm" style="background:var(--accent-purple);" onclick="upgradePet('${pet.id}')">
+          Nâng Cấp (60 Vàng, 15 Tích Lũy)
         </button>
       </div>
     `;
@@ -178,12 +162,8 @@ function renderPets() {
   });
 }
 
-window.toggleEquipPet = function(petId) {
-  if (gameState.player.activePetId === petId) {
-    gameState.player.activePetId = null;
-  } else {
-    gameState.player.activePetId = petId;
-  }
+window.togglePetEquip = function(petId) {
+  gameState.player.activePetId = gameState.player.activePetId === petId ? null : petId;
   renderPets();
   renderTopStats();
 };
@@ -193,21 +173,20 @@ window.upgradePet = function(petId) {
   const pet = p.pets.find(i => i.id === petId);
   if (!pet) return;
 
-  if (p.gold >= 50 && p.points >= 10) {
-    p.gold -= 50;
-    p.points -= 10;
+  if (p.gold >= 60 && p.points >= 15) {
+    p.gold -= 60;
+    p.points -= 15;
     pet.level += 1;
-    pet.hp += 20;
-    pet.atk += 4;
-    pet.def += 2;
+    pet.hp += 25;
+    pet.atk += 5;
+    pet.def += 3;
     renderPets();
     renderTopStats();
   } else {
-    alert("Không đủ 50 Vàng và 10 Điểm Tích Lũy để nâng cấp!");
+    alert("Không đủ 60 Vàng và 15 Điểm Tích Lũy để nâng cấp!");
   }
 };
 
-// Quản lý Bộ Thẻ Bài
 function renderDeck() {
   const eqList = document.getElementById("equipped-cards-list");
   const ownList = document.getElementById("owned-cards-list");
@@ -220,33 +199,30 @@ function renderDeck() {
 
     const isEq = gameState.player.equippedCards.includes(cid);
     const div = document.createElement("div");
-    div.className = "badge-card";
+    div.className = `badge-card ${card.elementClass}`;
     div.innerHTML = `
-      <div class="card-emblem" style="color: ${card.color}; background: rgba(255,255,255,0.05);">
+      <div class="card-emblem-icon" style="color:${card.color};">
         <i class="fa-solid ${card.icon}"></i>
       </div>
       <h4>${card.name}</h4>
       <p>${card.desc}</p>
-      <button class="btn-primary btn-sm" onclick="toggleCardEquip('${card.id}')">
+      <button class="btn-primary btn-sm" onclick="toggleCard('${card.id}')">
         ${isEq ? 'Tháo Ra' : 'Trang Bị'}
       </button>
     `;
 
-    if (isEq) {
-      eqList.appendChild(div);
-    } else {
-      ownList.appendChild(div);
-    }
+    if (isEq) eqList.appendChild(div);
+    else ownList.appendChild(div);
   });
 }
 
-window.toggleCardEquip = function(cardId) {
+window.toggleCard = function(cardId) {
   const p = gameState.player;
   if (p.equippedCards.includes(cardId)) {
     p.equippedCards = p.equippedCards.filter(id => id !== cardId);
   } else {
     if (p.equippedCards.length >= 5) {
-      alert("Chỉ được trang bị tối đa 5 thẻ bài!");
+      alert("Chỉ được trang bị tối đa 5 thẻ bài cùng lúc!");
       return;
     }
     p.equippedCards.push(cardId);
@@ -255,46 +231,46 @@ window.toggleCardEquip = function(cardId) {
   renderTopStats();
 };
 
-// Triệu hồi Convene & Mở quyền thẻ
-function initConveneActions() {
-  const btnTicket = document.getElementById("btn-roll-ticket");
-  const btnPoint = document.getElementById("btn-roll-point");
+function initConvene() {
+  const btnT = document.getElementById("btn-roll-ticket");
+  const btnP = document.getElementById("btn-roll-point");
   const log = document.getElementById("convene-log");
 
-  btnTicket.addEventListener("click", () => {
+  btnT.addEventListener("click", () => {
     if (gameState.player.tickets <= 0) {
-      alert("Bạn đã hết vé roll!");
+      alert("Hết Vé Roll!");
       return;
     }
-    gameState.player.tickets -= 1;
-    rollCardLogic(log);
+    gameState.player.tickets--;
+    rollCard(log);
   });
 
-  btnPoint.addEventListener("click", () => {
+  btnP.addEventListener("click", () => {
     if (gameState.player.points < 100) {
       alert("Cần tối thiểu 100 Điểm Tích Lũy!");
       return;
     }
     gameState.player.points -= 100;
-    rollCardLogic(log);
+    rollCard(log);
   });
 }
 
-function rollCardLogic(logEl) {
+function rollCard(logEl) {
   const unowned = CARDS_DATABASE.filter(c => !gameState.player.ownedCards.includes(c.id));
   if (unowned.length === 0) {
-    logEl.innerHTML = `<p style="color: var(--accent-gold);">Bạn đã mở khóa toàn bộ thẻ bài hiện có!</p>`;
+    logEl.innerHTML = `<p style="color:var(--accent-gold);">Toàn bộ huy hiệu thẻ bài đã được mở khóa!</p>`;
     renderTopStats();
     return;
   }
   const picked = unowned[Math.floor(Math.random() * unowned.length)];
   gameState.player.ownedCards.push(picked.id);
-  logEl.innerHTML = `<p style="color: var(--accent-green);">Đã triệu hồi thành công thẻ mới: <b>${picked.name}</b>!</p>`;
-  renderTopStats();
+  logEl.innerHTML = `<p style="color:var(--accent-green); font-size:1.05rem;">
+    Triệu hồi thành công Huy Hiệu: <b>${picked.name}</b>!
+  </p>`;
   renderDeck();
+  renderTopStats();
 }
 
-// Logic Trận Đấu
 function initBattleModal() {
   document.getElementById("btn-flee").addEventListener("click", () => {
     clearInterval(gameState.combatInterval);
@@ -302,6 +278,7 @@ function initBattleModal() {
   });
 }
 
+// Logic Trận Đấu Thời Gian Thực & Kỹ Năng Boss Qing
 window.startCombat = function(monsterId) {
   const mob = MAP1_MONSTERS.find(m => m.id === monsterId);
   if (!mob) return;
@@ -309,7 +286,6 @@ window.startCombat = function(monsterId) {
   const modal = document.getElementById("battle-modal");
   modal.classList.remove("hidden");
 
-  // Tính stats người chơi
   let pMaxHp = gameState.player.baseHp;
   let pAtk = gameState.player.baseAtk;
   let pDef = gameState.player.baseDef;
@@ -341,7 +317,6 @@ window.startCombat = function(monsterId) {
   let enemyAtk = mob.atk;
   let enemyDef = mob.def;
 
-  // Trạng thái Quỹ Ngọn Cỏ của Boss Qing
   let qingFund = 0;
   let isRecovering = false;
   let recoveryTimer = 0;
@@ -357,48 +332,52 @@ window.startCombat = function(monsterId) {
   }
 
   document.getElementById("enemy-name").innerText = mob.name;
-  const avatar = document.getElementById("enemy-avatar");
-  avatar.style.borderColor = mob.color;
-  avatar.style.color = mob.color;
-  avatar.innerHTML = `<i class="fa-solid ${mob.icon}"></i>`;
+  const enemyImg = document.getElementById("enemy-sprite-img");
+  const playerImg = document.getElementById("player-sprite-img");
+  enemyImg.src = mob.sprite;
 
   const logBox = document.getElementById("combat-log");
-  logBox.innerHTML = `<div>Trận đấu bắt đầu với <b>${mob.name}</b>!</div>`;
+  logBox.innerHTML = `<div>Bắt đầu nghênh chiến <b>${mob.name}</b>!</div>`;
 
   clearInterval(gameState.combatInterval);
 
-  // Vòng lặp trận đấu (tick 1s)
   gameState.combatInterval = setInterval(() => {
-    // 1. Quản lý buff hồi máu Boss Qing nếu có
+    // 1. Logic Boss Qing (Quỹ Ngọn Cỏ)
     if (mob.isBoss) {
       if (cooldownTimer > 0) cooldownTimer--;
 
       if (isRecovering) {
         recoveryTimer--;
-        // Map 1 có hiệu ứng: hồi máu tăng 50% hiệu quả (5% * 1.5 = 7.5%)
-        const healAmount = Math.floor(enemyMaxHp * 0.075);
-        curEnemyHp = Math.min(enemyMaxHp, curEnemyHp + healAmount);
-        logBox.innerHTML += `<div style="color: var(--accent-green);">Quỹ Ngọn Cỏ hồi phục cho Qing: +${healAmount} HP!</div>`;
+        // Map Ngọn Cỏ nhận thêm 50% hiệu ứng hồi máu: 5% * 1.5 = 7.5% HP mỗi giây
+        const healAmt = Math.floor(enemyMaxHp * 0.075);
+        curEnemyHp = Math.min(enemyMaxHp, curEnemyHp + healAmt);
+        logBox.innerHTML += `<div style="color:var(--accent-green);">Quỹ Ngọn Cỏ khôi phục sinh lực Boss Qing: +${healAmt} HP!</div>`;
 
         if (recoveryTimer <= 0) {
           isRecovering = false;
           enemyAtk = mob.atk;
           enemyDef = mob.def;
           document.getElementById("e-buff-tag").classList.add("hidden");
-          logBox.innerHTML += `<div>Hiệu ứng khôi phục của Boss Qing đã kết thúc.</div>`;
+          logBox.innerHTML += `<div>Trạng thái hồi phục của Boss Qing đã kết thúc.</div>`;
         }
       }
     }
 
-    // 2. Người chơi tấn công Quái
+    // 2. Hiệp sĩ tấn công quái
+    playerImg.classList.add("attack-lunge-right");
+    setTimeout(() => playerImg.classList.remove("attack-lunge-right"), 300);
+
+    enemyImg.classList.add("hit-shake");
+    setTimeout(() => enemyImg.classList.remove("hit-shake"), 300);
+
     const pDmg = Math.max(1, pAtk - Math.floor(enemyDef / 2));
     curEnemyHp -= pDmg;
-    logBox.innerHTML += `<div>Bạn chém gây <b>${pDmg}</b> sát thương lên đối thủ.</div>`;
+    logBox.innerHTML += `<div>Hiệp sĩ gây <b>${pDmg}</b> sát thương lên đối thủ.</div>`;
 
-    // Khi Qing bị đánh -> tích 10-35% vào Quỹ
+    // Khi Boss Qing bị tấn công -> Tích từ 10 - 35% Quỹ
     if (mob.isBoss && !isRecovering && cooldownTimer <= 0) {
-      const gain = Math.floor(Math.random() * 26) + 10;
-      qingFund = Math.min(100, qingFund + gain);
+      const fundGain = Math.floor(Math.random() * 26) + 10;
+      qingFund = Math.min(100, qingFund + fundGain);
       document.getElementById("qing-fund-bar").style.width = `${qingFund}%`;
       document.getElementById("qing-fund-text").innerText = `${qingFund}%`;
 
@@ -406,44 +385,54 @@ window.startCombat = function(monsterId) {
         qingFund = 0;
         isRecovering = true;
         recoveryTimer = 5;
-        cooldownTimer = 20;
-        enemyAtk = Math.floor(mob.atk * 1.2);
-        enemyDef = Math.floor(mob.def * 1.4);
+        cooldownTimer = 20; // Hồi chiêu 20s
+        enemyAtk = Math.floor(mob.atk * 1.2); // Tăng 20% ATK
+        enemyDef = Math.floor(mob.def * 1.4); // Tăng 40% DEF
         document.getElementById("e-buff-tag").classList.remove("hidden");
-        logBox.innerHTML += `<div style="color: var(--accent-gold); font-weight: bold;">Quỹ Ngọn Cỏ đạt 100%! Qing kích hoạt Khôi Phục (+20% ATK, +40% DEF)!</div>`;
+        logBox.innerHTML += `<div style="color:var(--accent-gold); font-weight:bold;">
+          Quỹ Ngọn Cỏ kích hoạt! Qing liên tục hồi phục, nhận +20% ATK & +40% DEF trong 5s!
+        </div>`;
       }
     }
 
     // Kiểm tra quái chết
     if (curEnemyHp <= 0) {
       curEnemyHp = 0;
-      updateUI();
+      refreshCombatUI();
       clearInterval(gameState.combatInterval);
       handleVictory(mob);
       return;
     }
 
-    // 3. Quái tấn công Người chơi
-    const eDmg = Math.max(1, enemyAtk - Math.floor(pDef / 2));
-    curPlayerHp -= eDmg;
-    logBox.innerHTML += `<div style="color: #f87171;">Đối thủ phản đòn gây <b>${eDmg}</b> sát thương!</div>`;
+    // 3. Quái tấn công Hiệp sĩ
+    setTimeout(() => {
+      if (curEnemyHp <= 0) return;
 
-    // Kiểm tra người chơi chết
-    if (curPlayerHp <= 0) {
-      curPlayerHp = 0;
-      updateUI();
-      clearInterval(gameState.combatInterval);
-      logBox.innerHTML += `<div style="color: var(--accent-red); font-weight: bold;">Bạn đã bại trận! Hãy cường hóa thẻ và nâng cấp Pet trước khi thử lại.</div>`;
-      return;
-    }
+      enemyImg.classList.add("attack-lunge-left");
+      setTimeout(() => enemyImg.classList.remove("attack-lunge-left"), 300);
 
-    updateUI();
+      playerImg.classList.add("hit-shake");
+      setTimeout(() => playerImg.classList.remove("hit-shake"), 300);
+
+      const eDmg = Math.max(1, enemyAtk - Math.floor(pDef / 2));
+      curPlayerHp -= eDmg;
+      logBox.innerHTML += `<div style="color:var(--accent-red);">Đối thủ đánh trả gây <b>${eDmg}</b> sát thương!</div>`;
+
+      if (curPlayerHp <= 0) {
+        curPlayerHp = 0;
+        refreshCombatUI();
+        clearInterval(gameState.combatInterval);
+        logBox.innerHTML += `<div style="color:var(--accent-red); font-weight:bold;">Bạn đã bị đánh bại! Nâng cấp trang bị hoặc Pet trước khi thử lại.</div>`;
+      }
+      refreshCombatUI();
+    }, 450);
+
+    refreshCombatUI();
   }, 1000);
 
-  function updateUI() {
+  function refreshCombatUI() {
     document.getElementById("p-hp-bar").style.width = `${(curPlayerHp / pMaxHp) * 100}%`;
     document.getElementById("p-hp-text").innerText = `${curPlayerHp} / ${pMaxHp}`;
-
     document.getElementById("e-hp-bar").style.width = `${(curEnemyHp / enemyMaxHp) * 100}%`;
     document.getElementById("e-hp-text").innerText = `${curEnemyHp} / ${enemyMaxHp}`;
     logBox.scrollTop = logBox.scrollHeight;
@@ -453,8 +442,7 @@ window.startCombat = function(monsterId) {
 function handleVictory(mob) {
   const p = gameState.player;
   p.gold += mob.rewardGold;
-
-  let msg = `Chiến thắng! Nhận được ${mob.rewardGold} Vàng. `;
+  let msg = `Chiến thắng rực rỡ! Nhận được ${mob.rewardGold} Vàng. `;
 
   if (mob.isBoss) {
     p.tickets += mob.rewardTickets || 0;
@@ -462,10 +450,9 @@ function handleVictory(mob) {
     msg += `Nhận thêm ${mob.rewardTickets} Vé Roll và ${mob.rewardPoints} Điểm Tích Lũy!`;
   }
 
-  // Thu phục Pet (Stat cân bằng thấp hơn boss)
   if (mob.petDrop) {
-    const existing = p.pets.find(pt => pt.name === mob.petDrop.name);
-    if (!existing) {
+    const exists = p.pets.find(i => i.name === mob.petDrop.name);
+    if (!exists) {
       p.pets.push({
         id: "pet_" + Date.now(),
         name: mob.petDrop.name,
