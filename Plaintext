@@ -1,0 +1,5 @@
+rpg-card-game/
+├── index.html
+├── style.css
+├── game-data.js
+└── main.js
