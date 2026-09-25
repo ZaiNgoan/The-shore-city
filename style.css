@@ -1,7 +1,7 @@
 :root {
-  --bg-dark: #0f172a;
-  --panel-bg: #1e293b;
-  --card-bg: #334155;
+  --bg-dark: #090d16;
+  --panel-bg: #131c2e;
+  --card-bg: #1c273e;
   --accent-gold: #f59e0b;
   --accent-green: #10b981;
   --accent-blue: #3b82f6;
@@ -36,21 +36,22 @@ body {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  background: #111827;
+  gap: 10px;
+  background: #0f172a;
   padding: 12px 24px;
-  border-bottom: 2px solid #374151;
+  border-bottom: 2px solid #1e293b;
 }
 
 .stat-pill, .cur-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-right: 14px;
+  margin-right: 12px;
   background: var(--panel-bg);
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 999px;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  border: 1px solid #334155;
 }
 
 .text-red { color: var(--accent-red); }
@@ -63,8 +64,8 @@ body {
 /* Navigation */
 .nav-tabs {
   display: flex;
-  background: #182234;
-  border-bottom: 1px solid #334155;
+  background: #111a2d;
+  border-bottom: 1px solid #24324f;
   overflow-x: auto;
 }
 
@@ -79,51 +80,38 @@ body {
   align-items: center;
   gap: 8px;
   border-bottom: 3px solid transparent;
-  transition: all 0.2s ease;
+  transition: 0.2s;
 }
 
-.tab-btn:hover {
-  color: #fff;
-}
-
+.tab-btn:hover { color: #fff; }
 .tab-btn.active {
   color: var(--accent-green);
   border-bottom-color: var(--accent-green);
   background: rgba(16, 185, 129, 0.08);
 }
 
-/* Content Container */
 .content-container {
   padding: 24px;
   flex: 1;
 }
 
-.tab-panel {
-  display: none;
-}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
 
-.tab-panel.active {
-  display: block;
-}
-
-/* Island Select (9 Đảo) */
-.island-selector {
-  margin-bottom: 20px;
-}
-
+/* Chọn Đảo */
 .island-scroll {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding-bottom: 10px;
+  padding-bottom: 12px;
 }
 
 .island-card {
-  min-width: 140px;
+  min-width: 145px;
   padding: 12px;
   border-radius: 8px;
   background: var(--panel-bg);
-  border: 2px solid #334155;
+  border: 2px solid #223254;
   cursor: pointer;
   text-align: center;
   transition: 0.2s;
@@ -131,29 +119,18 @@ body {
 
 .island-card.active {
   border-color: var(--accent-green);
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.35);
 }
 
 .island-card.locked {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
   filter: grayscale(1);
 }
 
-.island-card h4 {
-  font-size: 0.95rem;
-  margin-bottom: 4px;
-}
-
-.island-card span {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-/* Map Header & Grid */
 .map-header {
-  margin-bottom: 20px;
-  background: #1e293b;
+  margin: 16px 0;
+  background: var(--panel-bg);
   padding: 16px;
   border-radius: 8px;
   border-left: 4px solid var(--accent-green);
@@ -165,90 +142,93 @@ body {
   margin-top: 4px;
 }
 
+/* Lưới quái & Boss đảo */
 .boss-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
 }
 
 .stage-node {
   background: var(--panel-bg);
-  border: 1px solid #334155;
+  border: 1px solid #2c3e66;
   border-radius: 12px;
-  padding: 18px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  position: relative;
+  transition: transform 0.2s;
+}
+
+.stage-node:hover {
+  transform: translateY(-4px);
 }
 
 .stage-node.is-boss {
   border: 2px solid var(--accent-gold);
-  background: linear-gradient(180deg, #1e293b 0%, #292524 100%);
+  background: linear-gradient(180deg, #1b2439 0%, #352615 100%);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
 }
 
-.rune-icon {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
+.stage-avatar-box {
+  width: 90px;
+  height: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
-  background: #0f172a;
-  border: 3px solid;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+  border: 2px dashed #405785;
 }
 
-.rune-grass { border-color: #22c55e; color: #22c55e; }
-.rune-flower { border-color: #ec4899; color: #ec4899; }
-.rune-wood { border-color: #84cc16; color: #84cc16; }
-.rune-qing { border-color: #eab308; color: #eab308; box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); }
-
-.stage-node h3 {
-  font-size: 1.1rem;
+.stage-avatar-box img {
+  max-width: 75px;
+  max-height: 75px;
 }
 
-.stage-node .stats-preview {
-  font-size: 0.85rem;
-  color: var(--text-muted);
+/* Thẻ bài phong cách Huy Hiệu Nguyên Tố (Rune Badges) */
+.deck-layout {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 24px;
+  margin-top: 16px;
 }
 
-/* Thẻ Bài Huy Hiệu (Không dùng hình Pet) */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 16px;
-  margin-top: 14px;
+  margin-top: 12px;
 }
 
 .badge-card {
   background: var(--card-bg);
-  border-radius: 10px;
-  padding: 14px;
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  border: 2px solid #475569;
-  position: relative;
+  border: 2px solid #3d4f73;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
 }
 
-.badge-card.rare-elite { border-color: var(--accent-blue); }
-.badge-card.rare-super { border-color: var(--accent-purple); }
-.badge-card.rare-qing { border-color: var(--accent-gold); }
+.badge-card.elem-grass { border-color: #22c55e; }
+.badge-card.elem-fire { border-color: #ef4444; }
+.badge-card.elem-earth { border-color: #f59e0b; }
+.badge-card.elem-gold { border-color: #eab308; box-shadow: 0 0 12px rgba(234, 179, 8, 0.3); }
 
-.card-emblem {
-  width: 60px;
-  height: 60px;
+.card-emblem-icon {
+  width: 55px;
+  height: 55px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.8rem;
   margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .badge-card p {
@@ -258,7 +238,7 @@ body {
   min-height: 48px;
 }
 
-/* Pet Manager */
+/* Danh sách Pet */
 .pet-container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -281,35 +261,31 @@ body {
   box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
 }
 
-/* Modal Battle */
+/* Modal Sàn Đấu */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
 }
 
-.modal-overlay.hidden {
-  display: none;
-}
+.modal-overlay.hidden { display: none; }
 
 .battle-box {
   background: var(--panel-bg);
   width: 90%;
-  max-width: 780px;
-  border-radius: 12px;
-  border: 1px solid #475569;
+  max-width: 760px;
+  border-radius: 14px;
+  border: 1px solid #3b4e77;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .battle-header {
-  padding: 12px 16px;
-  background: #0f172a;
+  padding: 12px 18px;
+  background: #0a0f1d;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -321,6 +297,7 @@ body {
   align-items: center;
   padding: 24px;
   gap: 16px;
+  background: radial-gradient(circle, #19263f 0%, #0c1220 100%);
 }
 
 .fighter-side {
@@ -331,11 +308,63 @@ body {
   gap: 6px;
 }
 
+.sprite-box {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.fighter-img {
+  max-width: 100px;
+  max-height: 100px;
+  transition: transform 0.15s ease;
+}
+
+.flip-x {
+  transform: scaleX(-1);
+}
+
+/* Hiệu ứng rung và tấn công động */
+.attack-lunge-right {
+  animation: lungeRight 0.3s ease;
+}
+
+.attack-lunge-left {
+  animation: lungeLeft 0.3s ease;
+}
+
+.hit-shake {
+  animation: shakeDamage 0.3s ease;
+  filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.8)) brightness(1.5);
+}
+
+@keyframes lungeRight {
+  0% { transform: scaleX(-1) translateX(0); }
+  50% { transform: scaleX(-1) translateX(-35px); }
+  100% { transform: scaleX(-1) translateX(0); }
+}
+
+@keyframes lungeLeft {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-35px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes shakeDamage {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-6px, 3px); }
+  50% { transform: translate(6px, -3px); }
+  75% { transform: translate(-4px, -2px); }
+}
+
 .hp-bar-bg, .fund-bar-bg {
   width: 100%;
-  max-width: 200px;
-  height: 12px;
-  background: #334155;
+  max-width: 180px;
+  height: 10px;
+  background: #25334e;
   border-radius: 6px;
   overflow: hidden;
 }
@@ -363,23 +392,30 @@ body {
   font-weight: bold;
 }
 
+.buff-badge {
+  font-size: 0.75rem;
+  background: var(--accent-gold);
+  color: #000;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: bold;
+}
+
 .battle-logs {
-  height: 160px;
-  background: #0b1120;
-  padding: 12px;
+  height: 150px;
+  background: #080d18;
+  padding: 12px 18px;
   overflow-y: auto;
   font-size: 0.85rem;
   color: #cbd5e1;
-  border-top: 1px solid #334155;
+  border-top: 1px solid #202c47;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-/* Common Buttons */
-button {
-  cursor: pointer;
-}
+/* Nút bấm chung */
+button { cursor: pointer; }
 
 .btn-primary {
   background: var(--accent-green);
@@ -391,18 +427,6 @@ button {
   transition: 0.2s;
 }
 
-.btn-primary:hover {
-  background: #059669;
-}
-
-.btn-sm {
-  padding: 4px 10px;
-  font-size: 0.8rem;
-}
-
-.btn-close {
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 1.5rem;
-}
+.btn-primary:hover { opacity: 0.9; }
+.btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+.btn-close { background: none; border: none; color: #fff; font-size: 1.5rem; }
