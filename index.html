@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cửu Đảo Ký - Đấu Trường Thẻ Bài</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header: Thông tin tài nguyên -->
+    <header class="top-bar">
+      <div class="user-stats">
+        <span class="stat-pill"><i class="fa-solid fa-heart text-red"></i> HP: <b id="stat-player-hp">100/100</b></span>
+        <span class="stat-pill"><i class="fa-solid fa-hand-fist text-orange"></i> ATK: <b id="stat-player-atk">10</b></span>
+        <span class="stat-pill"><i class="fa-solid fa-shield-halved text-blue"></i> DEF: <b id="stat-player-def">0</b></span>
+      </div>
+      <div class="currencies">
+        <span class="cur-pill"><i class="fa-solid fa-coins text-gold"></i> Vàng: <b id="cur-gold">500</b></span>
+        <span class="cur-pill"><i class="fa-solid fa-gem text-purple"></i> Điểm Tích Lũy: <b id="cur-points">0</b></span>
+        <span class="cur-pill"><i class="fa-solid fa-ticket text-green"></i> Vé Roll: <b id="cur-tickets">5</b></span>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="tab-map"><i class="fa-solid fa-map-location-dot"></i> Bản Đồ Chinh Chiến</button>
+      <button class="tab-btn" data-tab="tab-pet"><i class="fa-solid fa-dragon"></i> Linh Thú (Pet)</button>
+      <button class="tab-btn" data-tab="tab-deck"><i class="fa-solid fa-layer-group"></i> Trang Bị Thẻ</button>
+      <button class="tab-btn" data-tab="tab-convene"><i class="fa-solid fa-compass"></i> Triệu Hồi (Convene)</button>
+    </nav>
+
+    <!-- Main Content Panels -->
+    <main class="content-container">
+      
+      <!-- Panel 1: Chinh chiến & Bản đồ 9 Đảo -->
+      <section id="tab-map" class="tab-panel active">
+        <div class="island-selector">
+          <div class="island-scroll" id="island-list"></div>
+        </div>
+
+        <div class="map-view">
+          <div class="map-header">
+            <h2 id="current-island-title">Đảo 1: Ngọn Cỏ Xanh Biếc</h2>
+            <p id="current-island-desc" class="island-modifier">Hiệu ứng khu vực: Tăng 50% hiệu quả hồi máu cho toàn bộ phe.</p>
+          </div>
+          <div class="boss-grid" id="boss-grid"></div>
+        </div>
+      </section>
+
+      <!-- Panel 2: Linh Thú Pet (Chọn & Nâng Cấp) -->
+      <section id="tab-pet" class="tab-panel">
+        <div class="section-title">
+          <h2>Đồng Hành Linh Thú</h2>
+          <p>Mở khóa pet sau khi đánh bại quái/boss. Chọn 1 pet hỗ trợ và nâng cấp chỉ số.</p>
+        </div>
+        <div class="pet-container" id="pet-container"></div>
+      </section>
+
+      <!-- Panel 3: Trang Bị Thẻ Bài -->
+      <section id="tab-deck" class="tab-panel">
+        <div class="section-title">
+          <h2>Bộ Bài Phép Thuật (Tối đa 5 thẻ)</h2>
+          <p>Trang bị thẻ đã triệu hồi để gia tăng uy lực chiến đấu.</p>
+        </div>
+        <div class="deck-layout">
+          <div class="equipped-slots">
+            <h3>Thẻ Đang Trang Bị</h3>
+            <div class="cards-grid" id="equipped-cards-list"></div>
+          </div>
+          <div class="inventory-slots">
+            <h3>Kho Thẻ Sở Hữu</h3>
+            <div class="cards-grid" id="owned-cards-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 4: Convene (Triệu Hồi & Quyền Khiêu Chiến) -->
+      <section id="tab-convene" class="tab-panel">
+        <div class="section-title">
+          <h2>Điện Triệu Hồi & Khai Phong Thẻ Bài</h2>
+          <p>Dùng Điểm Tích Lũy hoặc Vé Roll để triệu hồi thẻ bài mới hoặc mở quyền khiêu chiến thẻ cổ xưa.</p>
+        </div>
+        <div class="gacha-actions">
+          <button id="btn-roll-ticket" class="btn-primary"><i class="fa-solid fa-ticket"></i> Rút Thẻ Bằng Vé (Tốn 1)</button>
+          <button id="btn-roll-point" class="btn-primary"><i class="fa-solid fa-gem"></i> Mở Quyền Khiêu Chiến (Tốn 100 Tích Lũy)</button>
+        </div>
+        <div class="convene-results" id="convene-log"></div>
+      </section>
+    </main>
+
+    <!-- Battle Arena Modal -->
+    <div id="battle-modal" class="modal-overlay hidden">
+      <div class="battle-box">
+        <div class="battle-header">
+          <span id="battle-map-tag" class="map-tag">Map: Ngọn Cỏ (+50% Hồi Máu)</span>
+          <button id="btn-flee" class="btn-close">&times;</button>
+        </div>
+
+        <div class="battle-arena">
+          <!-- Người chơi -->
+          <div class="fighter-side">
+            <div class="fighter-avatar rune-player">
+              <i class="fa-solid fa-khanda"></i>
+            </div>
+            <div class="fighter-name">Hiệp Sĩ (Bạn)</div>
+            <div class="hp-bar-bg">
+              <div id="p-hp-bar" class="hp-bar-fill" style="width: 100%;"></div>
+            </div>
+            <div id="p-hp-text" class="hp-text">100 / 100</div>
+            <div id="p-pet-tag" class="pet-badge">Chưa mang Pet</div>
+          </div>
+
+          <div class="battle-mid">
+            <div class="vs-badge">VS</div>
+            <div id="qing-meter-box" class="meter-box hidden">
+              <label>Quỹ Ngọn Cỏ</label>
+              <div class="fund-bar-bg">
+                <div id="qing-fund-bar" class="fund-bar-fill" style="width: 0%;"></div>
+              </div>
+              <span id="qing-fund-text">0%</span>
+            </div>
+          </div>
+
+          <!-- Quái / Boss -->
+          <div class="fighter-side">
+            <div class="fighter-avatar" id="enemy-avatar">
+              <i class="fa-solid fa-skull"></i>
+            </div>
+            <div class="fighter-name" id="enemy-name">Quái Vật</div>
+            <div class="hp-bar-bg">
+              <div id="e-hp-bar" class="hp-bar-fill" style="width: 100%;"></div>
+            </div>
+            <div id="e-hp-text" class="hp-text">0 / 0</div>
+            <div id="e-buff-tag" class="buff-badge hidden">Khôi Phục</div>
+          </div>
+        </div>
+
+        <div class="battle-logs" id="combat-log"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="game-data.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
